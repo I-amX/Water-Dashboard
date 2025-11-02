@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Water Utility Operations Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>Water Utility Operations Dashboard</h1>
+
+    <!-- Data Entry Form -->
+    <div class="form-section">
+      <h2>Add New Operational Data</h2>
+      <form id="washForm">
+        <input type="text" id="lga" placeholder="Location / LGA" required />
+
+        <input type="number" id="hours_supply" placeholder="Hours of Water Supply per Day" required />
+
+        <input type="number" id="customers_served" placeholder="Number of Customers Served" required />
+
+        <input type="number" step="0.01" id="collection_efficiency" placeholder="Collection Efficiency (%)" required />
+
+        <input type="number" step="0.01" id="capacity_utilization" placeholder="Capacity Utilization of Treatment Plant (%)" required />
+
+        <input type="number" step="0.01" id="non_revenue_water" placeholder="Non-Revenue Water (%)" required />
+
+        <input type="text" id="submitted_by" placeholder="Submitted By" required />
+
+        <button type="submit">Submit</button>
+      </form>
+    </div>
+
+    <!-- Chart Area -->
+    <div class="chart-section">
+      <canvas id="operationsChart"></canvas>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
