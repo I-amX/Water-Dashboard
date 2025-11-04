@@ -1,7 +1,7 @@
 ﻿services:
   - type: web
     name: water-dashboard
-    env: node
+    runtime: node
     buildCommand: npm install
     startCommand: node server.js
     plan: free
