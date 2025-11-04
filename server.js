@@ -1,5 +1,6 @@
 const express = require("express");
 const bodyParser = require("body-parser");
+const fs = require("fs");
 const path = require("path");
 const cors = require("cors");
 
@@ -8,82 +9,60 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static("public"));
 
-let db;
+// File-based “database”
+const DATA_FILE = path.join(__dirname, "data", "data.json");
 
-// ✅ Only use SQLite locally (not in production)
-if (process.env.NODE_ENV !== "production") {
-  const sqlite3 = require("sqlite3").verbose();
-  db = new sqlite3.Database("./database.db", (err) => {
-    if (err) {
-      console.error("❌ Error opening database:", err.message);
-    } else {
-      console.log("✅ Connected to local SQLite database.");
-      db.run(`
-        CREATE TABLE IF NOT EXISTS operations (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          lga TEXT,
-          hours_supply REAL,
-          customers_served INTEGER,
-          collection_efficiency REAL,
-          capacity_utilization REAL,
-          non_revenue_water REAL,
-          submitted_by TEXT,
-          timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
-      `);
-    }
-  });
-} else {
-  console.log("⚠️ Running in production mode — skipping SQLite setup.");
+// Ensure data folder and file exist
+if (!fs.existsSync(path.dirname(DATA_FILE))) {
+  fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true });
 }
-const PORT = process.env.PORT || 3000;
+if (!fs.existsSync(DATA_FILE)) {
+  fs.writeFileSync(DATA_FILE, "[]");
+}
 
-// API endpoint — Add new record
+// Helper functions
+function readData() {
+  try {
+    return JSON.parse(fs.readFileSync(DATA_FILE));
+  } catch (err) {
+    console.error("Error reading data.json:", err);
+    return [];
+  }
+}
+
+function writeData(data) {
+  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+}
+
+// API — Add new record
 app.post("/submit", (req, res) => {
   const data = req.body;
+  const allData = readData();
 
-  if (db) {
-    // Save only when SQLite is active
-    db.run(
-      `INSERT INTO operations (lga, hours_supply, customers_served, collection_efficiency, capacity_utilization, non_revenue_water, submitted_by)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [
-        data.lga,
-        data.hours_supply,
-        data.customers_served,
-        data.collection_efficiency,
-        data.capacity_utilization,
-        data.non_revenue_water,
-        data.submitted_by,
-      ],
-      (err) => {
-        if (err) {
-          console.error(err.message);
-          res.status(500).json({ message: "Database insert error" });
-        } else {
-          res.json({ message: "Data saved successfully (local mode)" });
-        }
-      }
-    );
-  } else {
-    // No DB on Render, but we still respond OK
-    console.log("Render mode — skipping database insert.");
-    res.json({ message: "Data received (Render mode, not saved)." });
-  }
+  const newEntry = {
+    id: Date.now(),
+    lga: data.lga,
+    hours_supply: Number(data.hours_supply),
+    customers_served: Number(data.customers_served),
+    collection_efficiency: Number(data.collection_efficiency),
+    capacity_utilization: Number(data.capacity_utilization),
+    non_revenue_water: Number(data.non_revenue_water),
+    submitted_by: data.submitted_by,
+    timestamp: new Date().toISOString(),
+  };
+
+  allData.push(newEntry);
+  writeData(allData);
+
+  res.json({ message: "✅ Data saved successfully", entry: newEntry });
 });
 
-// API endpoint — Get all records
+// API — Get all records
 app.get("/api/data", (req, res) => {
-  db.all("SELECT * FROM operations ORDER BY created_at DESC", [], (err, rows) => {
-    if (err) {
-      res.status(500).json({ error: err.message });
-    } else {
-      res.json(rows);
-    }
-  });
+  res.json(readData());
 });
 
-// Start server
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`✅ Server running at http://localhost:${PORT}`);
 });
