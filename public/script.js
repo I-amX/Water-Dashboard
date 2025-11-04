@@ -34,7 +34,7 @@ let operationsChart = new Chart(ctx, {
     responsive: true,
     plugins: {
       legend: { position: "top" },
-      title: { display: true, text: "Water Utility Performance Indicators" },
+      title: { display: true, text: "Performance Indicators" },
     },
     scales: {
       y: { beginAtZero: true, title: { display: true, text: "Value" } },
